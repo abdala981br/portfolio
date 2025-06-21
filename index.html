@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>abdala</title>
+    
+    <!-- FONTES (INTER) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- ÍCONES DE TECNOLOGIA -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.15.1/devicon.min.css">
+
+    <!-- ESTILOS -->
+    <style>
+        :root {
+            --bg-color: #040211;
+            --text-primary: #e0e6f1;
+            --text-secondary: #8c8d9c;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff00ff;
+            --border-color: #2a2a47;
+            --panel-bg: #0c0a1f;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        body.no-scroll {
+            overflow: hidden;
+        }
+
+        /* Camadas de Conteúdo */
+        .fixed-layer, .ui-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            transition: opacity 0.8s ease-out;
+        }
+        .fixed-layer.fade-out, .ui-container.fade-out { 
+            opacity: 0; 
+        }
+
+        #webgl-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            outline: none;
+            z-index: 1;
+        }
+
+        .scrollable-content {
+            position: relative;
+            z-index: 10;
+        }
+        
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 100px 5%;
+            width: 100%;
+        }
+
+        /* Seção Hero (Inicial) */
+        #hero {
+            position: relative;
+            z-index: 5;
+            justify-content: flex-start;
+        }
+        .ui-container {
+             z-index: 20;
+             pointer-events: none;
+        }
+        .hero-title-container {
+             width: 100%;
+             height: 100%;
+             display: flex;
+             justify-content: center;
+             align-items: flex-start;
+             padding-top: 6vh;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 10vw, 6rem);
+            font-weight: 500;
+            letter-spacing: clamp(0.5rem, 4vw, 1.5rem);
+            text-transform: lowercase;
+            text-align: center;
+            padding-left: clamp(0.5rem, 4vw, 1.5rem);
+            color: var(--text-primary);
+            transition: color 0.4s ease, text-shadow 0.4s ease, opacity 0.8s ease-out;
+            text-decoration: none;
+            cursor: pointer;
+            pointer-events: all;
+        }
+        .hero-title:hover {
+            color: #fff;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+        }
+        .hero-title.hidden-by-panel {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Indicador de Rolagem */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            letter-spacing: 0.1rem;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        .scroll-indicator.hidden {
+            opacity: 0;
+        }
+        .scroll-indicator svg {
+            width: 24px;
+            height: 24px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        /* Navegação do Hub Estática */
+        .hub-nav {
+            position: absolute;
+            bottom: 5vh;
+            left: 5%;
+            right: 5%;
+            width: 90%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: all;
+        }
+        .hub-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: clamp(0.9rem, 1.2vw, 1rem);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            padding: 10px;
+        }
+        .hub-nav a:hover {
+            color: #fff;
+            text-shadow: 0 0 12px rgba(0, 255, 255, 0.8);
+            transform: scale(1.05);
+        }
+        
+        /* Overlay de Portfólio */
+        .portfolio-overlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--panel-bg);
+            z-index: 50;
+            transform: translateY(100%);
+            transition: transform 1.25s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            padding: 4rem 5%;
+        }
+        .portfolio-overlay.visible {
+            transform: translateY(0);
+        }
+        .close-portfolio-btn {
+            position: absolute;
+            top: 2rem;
+            right: 5%;
+            font-size: 3rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .close-portfolio-btn:hover {
+            color: var(--text-primary);
+            transform: scale(1.2) rotate(90deg);
+        }
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1600px;
+            margin: auto;
+            padding-top: 2rem; /* Espaço para o botão de fechar */
+        }
+        .project-card {
+            background-color: #111119;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.1);
+        }
+        .project-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+            background-color: #000;
+        }
+        .project-card-content { padding: 1.5rem; }
+        .project-card-content h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .project-card-content p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+        .project-card-content a {
+            color: var(--accent-cyan); text-decoration: none; font-weight: 500;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+        .project-card-content a:hover { text-decoration: underline; }
+
+        /* Seção Sobre & Contato */
+        #about, #contact-section {
+            background: linear-gradient(180deg, var(--bg-color) 0%, #0c0a1a 100%);
+        }
+        .about-content, .contact-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .content-title { font-size: 2.5rem; margin-bottom: 2rem; font-weight: 500; }
+        .about-content p { font-size: 1.2rem; line-height: 1.8; color: var(--text-secondary); }
+
+        /* Contatos */
+        #contact-section { min-height: auto; padding-bottom: 8rem; }
+        #contact-section p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+        .contact-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+        .contact-link {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 60px; height: 60px; border-radius: 50%;
+            background-color: rgba(42, 42, 71, 0.3);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+        }
+        .contact-link:hover {
+            color: var(--text-primary);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px var(--accent-cyan), inset 0 0 10px rgba(0, 255, 255, 0.3);
+            transform: translateY(-5px);
+        }
+        .contact-link svg { width: 32px; height: 32px; z-index: 2; }
+        
+        /* Carrossel de Ícones */
+        .tech-carousel-container {
+            width: 100%; padding: 8rem 0; overflow: hidden; position: relative;
+        }
+        .tech-carousel-container::before {
+            content: ''; position: absolute; top: 0; left: 50%;
+            transform: translateX(-50%); width: 200px; height: 100%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.15) 0%, rgba(0,255,255,0) 60%);
+            z-index: 1;
+        }
+        .tech-carousel-track {
+            display: flex; width: fit-content;
+            animation: scroll 60s linear infinite;
+            position: relative; z-index: 2;
+        }
+        .tech-group { display: flex; align-items: center; gap: 5rem; padding: 0 2.5rem; }
+        .tech-group i {
+            font-size: 4rem; color: var(--text-secondary);
+            transition: color 0.4s, transform 0.4s, text-shadow 0.4s;
+        }
+        .tech-group i:hover {
+            color: var(--accent-cyan); transform: scale(1.2); text-shadow: 0 0 20px var(--accent-cyan);
+        }
+        @keyframes scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="fixed-layer" class="fixed-layer">
+        <canvas id="webgl-canvas"></canvas>
+    </div>
+    
+    <div id="ui-container" class="ui-container">
+        <div class="hero-title-container">
+             <a id="hero-title" class="hero-title">abdala</a>
+        </div>
+        <nav class="hub-nav">
+            <a id="nav-link-portfolio">PORTFOLIO</a>
+            <a id="nav-link-cv" href="CV-Lucas Abdala Martins (1).docx" download>BAIXAR CV</a>
+        </nav>
+        <div id="scroll-indicator" class="scroll-indicator">
+            <span>ROLE PARA EXPLORAR</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+        </div>
+    </div>
+
+
+    <div id="portfolio-overlay" class="portfolio-overlay">
+        <a id="close-portfolio-btn" class="close-portfolio-btn">&times;</a>
+        <div class="portfolio-grid">
+            <!-- Projeto 1 -->
+            <div class="project-card">
+                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExejE2d2d0bXhycXZqOXdoY3ZtcG4wbTdqb3E0cTJtM3k2anFja3NucCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/L1R1tvI9svkIWwpY2b/giphy.gif" alt="Animação de terminal mostrando um programa em C">
+                <div class="project-card-content">
+                    <h3>Manipulação de Imagens em C</h3>
+                    <p>Estrutura de lista encadeada para manipular imagens .pgm via linha de comando, com operações de espelhamento, inversão e limiarização.</p>
+                    <a href="https://github.com/lucasabdala" target="_blank">Ver no GitHub <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" /></svg></a>
+                </div>
+            </div>
+            <!-- Projeto 2 -->
+            <div class="project-card">
+                 <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Vub3I0enNxczZoa204bHF5MWRuajQwdmlwaDlyNmx6bXNwdjVhcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5h4a9G3sZH3Gg/giphy.gif" alt="Animação de terminal mostrando uma simulação em Python">
+                <div class="project-card-content">
+                    <h3>Simulação de Filas com Monte Carlo</h3>
+                    <p>Simulação em Python de sistemas de filas multi-servidor com análise estatística de métricas operacionais e intervalos de confiança.</p>
+                     <a href="https://github.com/lucasabdala" target="_blank">Ver no GitHub <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" /></svg></a>
+                </div>
+            </div>
+            <!-- Projeto 3 (Placeholder) -->
+            <div class="project-card">
+                 <img src="https://media.giphy.com/media/lz69CE32834c4yDAeS/giphy.gif" alt="Animação de terminal genérica">
+                <div class="project-card-content">
+                    <h3>Projeto de Segurança</h3>
+                    <p>Exploração de conceitos de hacking ético e segurança da informação em um ambiente controlado.</p>
+                     <a href="https://github.com/lucasabdala" target="_blank">Ver no GitHub <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" /></svg></a>
+                </div>
+            </div>
+            <!-- Projeto 4 (Placeholder) -->
+            <div class="project-card">
+                 <img src="https://media.giphy.com/media/paTz7UZbPfAl2/giphy.gif" alt="Animação de código genérica">
+                <div class="project-card-content">
+                    <h3>Exploração de IA</h3>
+                    <p>Implementação de algoritmos de inteligência artificial para resolução de problemas específicos, focando em aprendizado e otimização.</p>
+                     <a href="https://github.com/lucasabdala" target="_blank">Ver no GitHub <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" /></svg></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="scrollable-content">
+        <section id="hero"></section>
+
+        <section id="about">
+            <div class="about-content">
+                <h2 class="content-title">SOBRE MIM</h2>
+                <p>
+                    Estudante de Ciência da Computação na <strong>UNESP - Rio Claro</strong>, com habilidades em programação e interesse em <strong>inteligência artificial</strong> e <strong>desenvolvimento de software</strong>. Busco uma oportunidade para aplicar meus conhecimentos em projetos inovadores e continuar meu crescimento profissional.
+                </p>
+            </div>
+            <div class="tech-carousel-container">
+                <div class="tech-carousel-track">
+                     <div class="tech-group">
+                        <i class="devicon-c-plain" title="C"></i><i class="devicon-cplusplus-plain" title="C++"></i><i class="devicon-csharp-plain" title="C#"></i><i class="devicon-python-plain" title="Python"></i><i class="devicon-java-plain" title="Java"></i><i class="devicon-unity-original" title="Unity"></i><i class="devicon-godot-plain" title="Godot Engine"></i><i class="devicon-git-plain" title="Git"></i><i class="devicon-github-original" title="GitHub"></i><i class="devicon-figma-plain" title="Figma"></i>
+                    </div>
+                    <div class="tech-group" aria-hidden="true">
+                        <i class="devicon-c-plain" title="C"></i><i class="devicon-cplusplus-plain" title="C++"></i><i class="devicon-csharp-plain" title="C#"></i><i class="devicon-python-plain" title="Python"></i><i class="devicon-java-plain" title="Java"></i><i class="devicon-unity-original" title="Unity"></i><i class="devicon-godot-plain" title="Godot Engine"></i><i class="devicon-git-plain" title="Git"></i><i class="devicon-github-original" title="GitHub"></i><i class="devicon-figma-plain" title="Figma"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact-section">
+            <div class="contact-content">
+                <h2 class="content-title">VAMOS CONECTAR</h2>
+                <p>Estou sempre aberto a novas oportunidades e colaborações. Sinta-se à vontade para entrar em contato.</p>
+                <div class="contact-links">
+                    <a href="https://www.linkedin.com/in/lucas-abdala-martins/" target="_blank" class="contact-link" title="LinkedIn"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
+                    <a href="https://github.com/lucasabdala" target="_blank" class="contact-link" title="GitHub"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+                    <a href="mailto:abdalalucas2004@gmail.com" class="contact-link" title="Email"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M1.5 8.67v8.58a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3V8.67l-8.928 5.493a3 3 0 0 1-3.144 0L1.5 8.67Z"/><path d="M22.5 6.908V6.75a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3v.158l9.714 5.978a1.5 1.5 0 0 0 1.572 0L22.5 6.908Z"/></svg></a>
+                    <a href="tel:+5511952210115" class="contact-link" title="Telefone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.279-.087.431l4.258 7.373c.077.152.25.232.431.157l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C6.55 22.5 1.5 17.45 1.5 10.5V4.5Z" clip-rule="evenodd" /></svg></a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script type="importmap">
+        { 
+            "imports": { 
+                "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+            } 
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import Lenis from 'https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.mjs';
+
+        // --- Configuração da Cena ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 4;
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#webgl-canvas'),
+            antialias: true,
+            alpha: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // --- Sistema de Iluminação Aprimorado ---
+        scene.fog = new THREE.Fog(0x040211, 6, 15);
+        
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(ambientLight);
+        
+        const topLight = new THREE.DirectionalLight(0xffffff, 2.0);
+        topLight.position.set(0, 10, 2);
+        topLight.target.position.set(0, 0, 0);
+        scene.add(topLight);
+        scene.add(topLight.target);
+        
+        const rimLight = new THREE.PointLight(0x00ffff, 4, 15);
+        scene.add(rimLight);
+
+        // --- Objeto 3D Central com Textura ---
+        const textureLoader = new THREE.TextureLoader();
+        const normalMap = textureLoader.load('https://threejsfundamentals.org/threejs/resources/images/textures/bumpy-metal/bumpy-metal-nm.jpg');
+
+        const geometry = new THREE.TorusKnotGeometry(1, 0.3, 256, 32);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xc0c0ff, 
+            metalness: 0.9,
+            roughness: 0.1,
+            normalMap: normalMap,
+            normalScale: new THREE.Vector2(0.1, 0.1),
+            emissive: 0x101030,
+            emissiveIntensity: 0.4
+        });
+        const crystal = new THREE.Mesh(geometry, material);
+        scene.add(crystal);
+        
+        // --- Interatividade do Mouse ---
+        const mouse = new THREE.Vector2();
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // --- Animação ---
+        const clock = new THREE.Clock();
+
+        function animate(time) {
+            // Rotação do objeto
+            const targetRotationX = -mouse.y * 0.3;
+            const targetRotationY = mouse.x * 0.3;
+            crystal.rotation.x += (targetRotationX - crystal.rotation.x) * 0.05;
+            crystal.rotation.y += (targetRotationY - crystal.rotation.y) * 0.05;
+            crystal.rotation.z += 0.0005;
+            
+            // Luz de contorno acompanha a câmera
+            rimLight.position.copy(camera.position);
+            
+            renderer.render(scene, camera);
+        }
+        renderer.setAnimationLoop(animate);
+        
+        // --- Lógica do Site ---
+        const lenis = new Lenis({ duration: 2.5, smoothTouch: true });
+        function raf(time) {
+          lenis.raf(time)
+          requestAnimationFrame(raf)
+        }
+        requestAnimationFrame(raf);
+        
+        const portfolioOverlay = document.getElementById('portfolio-overlay');
+        const portfolioBtn = document.getElementById('nav-link-portfolio');
+        const heroTitle = document.getElementById('hero-title');
+        const closePortfolioBtn = document.getElementById('close-portfolio-btn');
+        let isPortfolioOpen = false;
+
+        const openPortfolio = () => {
+            portfolioOverlay.classList.add('visible');
+            document.body.classList.add('no-scroll');
+            isPortfolioOpen = true;
+            heroTitle.classList.add('hidden-by-panel');
+        };
+        const closePortfolio = () => {
+            portfolioOverlay.classList.remove('visible');
+            document.body.classList.remove('no-scroll');
+            isPortfolioOpen = false;
+            heroTitle.classList.remove('hidden-by-panel');
+        };
+
+        portfolioBtn.addEventListener('click', (e) => { e.preventDefault(); openPortfolio(); });
+        closePortfolioBtn.addEventListener('click', (e) => { e.preventDefault(); closePortfolio(); });
+        heroTitle.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (isPortfolioOpen) {
+                closePortfolio();
+            } else {
+                lenis.scrollTo('#about');
+            }
+        });
+
+        const uiContainer = document.getElementById('ui-container');
+        const fixedLayer = document.getElementById('fixed-layer');
+        
+        window.addEventListener('scroll', () => {
+            const shouldFade = window.scrollY > 20; // Ajuste para transição mais rápida
+            uiContainer.classList.toggle('fade-out', shouldFade);
+            fixedLayer.classList.toggle('fade-out', shouldFade);
+
+            if (shouldFade) {
+                document.getElementById('scroll-indicator').classList.add('hidden');
+            }
+        });
+
+        // --- Responsividade ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        });
+    </script>
+</body>
+</html>
