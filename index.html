@@ -422,8 +422,7 @@
     </script>
     <script type="module">
         import * as THREE from 'three';
-        import Lenis from 'https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.mjs';
-
+        
         // --- Configuração da Cena ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -476,9 +475,9 @@
         });
 
         // --- Animação ---
-        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
 
-        function animate(time) {
             // Rotação do objeto
             const targetRotationX = -mouse.y * 0.3;
             const targetRotationY = mouse.x * 0.3;
@@ -491,16 +490,9 @@
             
             renderer.render(scene, camera);
         }
-        renderer.setAnimationLoop(animate);
+        animate();
         
         // --- Lógica do Site ---
-        const lenis = new Lenis({ duration: 2.5, smoothTouch: true });
-        function raf(time) {
-          lenis.raf(time)
-          requestAnimationFrame(raf)
-        }
-        requestAnimationFrame(raf);
-        
         const portfolioOverlay = document.getElementById('portfolio-overlay');
         const portfolioBtn = document.getElementById('nav-link-portfolio');
         const heroTitle = document.getElementById('hero-title');
@@ -522,12 +514,13 @@
 
         portfolioBtn.addEventListener('click', (e) => { e.preventDefault(); openPortfolio(); });
         closePortfolioBtn.addEventListener('click', (e) => { e.preventDefault(); closePortfolio(); });
+        
         heroTitle.addEventListener('click', (e) => {
             e.preventDefault();
             if (isPortfolioOpen) {
                 closePortfolio();
             } else {
-                lenis.scrollTo('#about');
+                document.querySelector('#about').scrollIntoView({ behavior: 'smooth' });
             }
         });
 
@@ -535,7 +528,7 @@
         const fixedLayer = document.getElementById('fixed-layer');
         
         window.addEventListener('scroll', () => {
-            const shouldFade = window.scrollY > 20; // Ajuste para transição mais rápida
+            const shouldFade = window.scrollY > 20; 
             uiContainer.classList.toggle('fade-out', shouldFade);
             fixedLayer.classList.toggle('fade-out', shouldFade);
 
@@ -554,3 +547,4 @@
     </script>
 </body>
 </html>
+
